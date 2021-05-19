@@ -6,7 +6,7 @@ What'd you expect? Of course this is about Conway's (Game of) Life!
 
 ## TODO
 
-- Adding vertices;
+- Adding vertices and edges;
 - Refactoring and improving performance;
 - Finding known structures? Maybe a glider?
 - Testing other dynamical rules;
