@@ -3,7 +3,10 @@ What'd you expect? Of course this is about Conway's (Game of) Life!
 
 ## A topologically static version:
 
-https://user-images.githubusercontent.com/35747979/121799358-06bd4400-cc02-11eb-9b3c-d3725817d3c5.mp4
+
+https://user-images.githubusercontent.com/35747979/121799380-25233f80-cc02-11eb-9b76-6bdf538620b7.mp4
+
+
 
 ## Topology-dynamics interaction:
 
