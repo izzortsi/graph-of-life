@@ -4,10 +4,6 @@ What'd you expect? Of course this is about Conway's (Game of) Life!
 ## A topologically static version:
 
 
-https://user-images.githubusercontent.com/35747979/121799380-25233f80-cc02-11eb-9b76-6bdf538620b7.mp4
-
-
-
 ## Topology-dynamics interaction:
 
 ![and as well of Death, I guess](https://github.com/izzortsi/graph-of-life/blob/e6da112f015fbe24fad3d456093f838cba2b62de/frames/graph_life2.gif "and as well of Death, I guess")
