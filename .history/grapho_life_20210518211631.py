@@ -4,7 +4,7 @@ import graph_tool.all as gt
 import numpy as np
 import numpy.random as npr
 import matplotlib.pyplot as plt
-import os, sys
+import os
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject, GLib
 import argparse
 
@@ -41,7 +41,7 @@ parser.add_argument(
 )
 
 # %%
-
+  
 parser.add_argument(
     "-dens",
     "--density",
@@ -245,7 +245,6 @@ rule = update_state
 # %% codecell
 g = make_rpGA(N, num_states, density=density)
 g.vp.pos = gt.sfdp_layout(g, pos=g.vp.pos, eweight=g.ep.weight, K=0.5)
-pos = g.vp.pos
 gt.graph_draw(
     g,
     pos=g.vp.pos,
@@ -256,19 +255,18 @@ gt.graph_draw(
 )
 # %% codecell
 
-#offscreen = sys.argv[1] == "offscreen" if len(sys.argv) > 1 else False
-offscreen = False
-max_count = 250
+offscreen = sys.argv[1] == "offscreen" if len(sys.argv) > 1 else False
+max_count = 5000
 if offscreen and not os.path.exists("./frames"):
     os.mkdir("./frames")
 
 # This creates a GTK+ window with the initial graph layout
 if not offscreen:
-    win = gt.GraphWindow(g, pos, geometry=(500, 400))
+    win = GraphWindow(g, pos, geometry=(500, 400))
 else:
     win = Gtk.OffscreenWindow()
     win.set_default_size(500, 400)
-    win.graph = gt.GraphWidget(g, pos)
+    win.graph = GraphWidget(g, pos)
     win.add(win.graph)
 # %% codecell
 

@@ -6,67 +6,7 @@ import numpy.random as npr
 import matplotlib.pyplot as plt
 import os, sys
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject, GLib
-import argparse
 
-# %%
-
-parser = argparse.ArgumentParser(
-    description="Open an interactive GTK window running a Graph of Life."
-)
-parser.add_argument(
-    "is_offscreen",
-    action="store_true",
-    help="if True, will dump the frames to the disk instead of running an interactive GTK window",
-)
-
-# %%
-
-parser.add_argument(
-    "niter",
-    metavar="n_iter",
-    action="store_const",
-    const = 60,
-    default = 60,
-    help="number of iterations to be performed. If zero, runs until convergence or a predefined maximum number of iterations",
-)
-
-# %%
-
-parser.add_argument(
-    "-dims",
-    "--dimensions",
-    default=[50, 50],
-    nargs = 2,
-    help="-dims n m where n, m are the size of the underlying space used for the generation of the base random geometric graph. random ",
-)
-
-# %%
-
-parser.add_argument(
-    "-dens",
-    "--density",
-    action="store_const",
-    const = 0.65,
-    default=0.65,
-    help="parameter of the binomial distribution whence the states come; thus the higher the value, the denser the number of 'live' states",
-)
-
-
-# %%
-
-parser.add_argument(
-    "-ss",
-    "--spacescale",
-    action="store_const",
-    const = 2.9,
-    default=2.9,
-    help="determines the sparcity of the points distributed in the space; defaults to 2.9. smaller values lead to more densely clustered graphs",
-)
-
-# %%
-
-args = parser.parse_args()
-print(args)
 
 # %%
 
@@ -192,84 +132,74 @@ def update_topology(
     return G
 
 
-# %% codecell
-def make_gif(g, rule, n_iter=n_iter, outname="def", draw=True):
-    fname_prefix = os.path.join("./frames", outname)
-    if draw == True:
-        gt.graph_draw(
-            g,
-            pos=g.vp.pos,
-            vertex_shape="circle",
-            vertex_fill_color=g.vp.color,
-            vertex_size=9,
-            output_size=(plt_scale * n, plt_scale * m),
-            output=fname_prefix + "_draw0000.png",
-        )
-
-    Gs = [g]
-
-    for i in range(1, n_iter + 1):
-        G = update_configuration(Gs[-1], rule=rule)
-        # print(len(G.vp.state.a), len(Gs[-1].vp.state.a))
-        msize = min([len(G.vp.state.a), len(Gs[-1].vp.state.a)])
-
-        if np.all(G.vp.state.a[-msize:-1] == Gs[-1].vp.state.a[-msize:-1]):
-            print("early convergence")
-            return Gs
-        else:
-            G = update_topology(G)
-            npos = gt.sfdp_layout(
-                G, pos=G.vp.pos, eweight=G.ep.weight, max_iter=1, init_step=0.01, K=0.5
-            )
-            G.vp.pos = npos
-
-        if draw == True:
-            fname_prefix = os.path.join("./frames", outname)
-            gt.graph_draw(
-                G,
-                pos=G.vp.pos,
-                vertex_shape="circle",
-                vertex_fill_color=G.vp.color,
-                vertex_size=9,
-                output_size=(plt_scale * n, plt_scale * m),
-                output=fname_prefix + "_draw%04d.png" % i,
-            )
-        fname_prefix + "_draw%04d.png"
-        Gs.append(G)
-
-    return Gs
-
 
 # %% codecell
 rule = update_state
 # %% codecell
 g = make_rpGA(N, num_states, density=density)
-g.vp.pos = gt.sfdp_layout(g, pos=g.vp.pos, eweight=g.ep.weight, K=0.5)
-pos = g.vp.pos
-gt.graph_draw(
-    g,
-    pos=g.vp.pos,
+pos = gt.sfdp_layout(g, pos=g.vp.pos, eweight=g.ep.weight, K=0.5)
+
+# %% codecell
+
+#offscreen = sys.argv[1] == "offscreen" if len(sys.argv) > 1 else False
+
+max_count = 250
+
+win = gt.GraphWindow(g, pos, geometry=(500, 400),
     vertex_shape="circle",
     vertex_fill_color=g.vp.color,
     vertex_size=9,
     output_size=(plt_scale * n, plt_scale * m),
-)
-# %% codecell
+    )
+count = 0
+##
+def run_simulation():
 
-#offscreen = sys.argv[1] == "offscreen" if len(sys.argv) > 1 else False
-offscreen = False
-max_count = 250
-if offscreen and not os.path.exists("./frames"):
-    os.mkdir("./frames")
+    global count
+    global g
+  
+    Gs = [g, g]
 
-# This creates a GTK+ window with the initial graph layout
-if not offscreen:
-    win = gt.GraphWindow(g, pos, geometry=(500, 400))
-else:
-    win = Gtk.OffscreenWindow()
-    win.set_default_size(500, 400)
-    win.graph = gt.GraphWidget(g, pos)
-    win.add(win.graph)
-# %% codecell
+    g = update_configuration(Gs[-1], rule=rule)
+    # print(len(G.vp.state.a), len(Gs[-1].vp.state.a))
+    msize = min([len(G.vp.state.a), len(Gs[-1].vp.state.a)])
 
-# %% codecell
+    if np.all(G.vp.state.a[-msize:-1] == Gs[-1].vp.state.a[-msize:-1]):
+        print("early convergence")
+        sys.exit(0)
+    else:
+        g = update_topology(G)
+        gt.sfdp_layout(
+            g, pos=g.vp.pos, eweight=g.ep.weight, max_iter=1, init_step=0.01, K=0.5
+            )
+
+
+    Gs[0] = g
+    Gs[1] = g
+
+    count += 1
+
+    win.graph.regenerate_surface()
+    win.graph.queue_draw()
+
+    if count >= max_count:
+        sys.exit(0)
+
+    return True
+
+##
+
+cid = GLib.idle_add(run_simulation)
+
+# We will give the user the ability to stop the program by closing the window.
+win.connect("delete_event", Gtk.main_quit)
+
+# Actually show the window, and start the main loop.
+win.show_all()
+Gtk.main()
+##
+##
+
+# %%
+
+# %%

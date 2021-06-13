@@ -1,10 +1,9 @@
 # %% codecell
-from defusedxml import DTDForbidden
 import graph_tool.all as gt
 import numpy as np
 import numpy.random as npr
 import matplotlib.pyplot as plt
-import os, sys
+import os
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject, GLib
 import argparse
 
@@ -18,9 +17,6 @@ parser.add_argument(
     action="store_true",
     help="if True, will dump the frames to the disk instead of running an interactive GTK window",
 )
-
-# %%
-
 parser.add_argument(
     "niter",
     metavar="n_iter",
@@ -30,11 +26,10 @@ parser.add_argument(
     help="number of iterations to be performed. If zero, runs until convergence or a predefined maximum number of iterations",
 )
 
-# %%
-
 parser.add_argument(
     "-dims",
     "--dimensions",
+    action="store_const",
     default=[50, 50],
     nargs = 2,
     help="-dims n m where n, m are the size of the underlying space used for the generation of the base random geometric graph. random ",
@@ -42,33 +37,8 @@ parser.add_argument(
 
 # %%
 
-parser.add_argument(
-    "-dens",
-    "--density",
-    action="store_const",
-    const = 0.65,
-    default=0.65,
-    help="parameter of the binomial distribution whence the states come; thus the higher the value, the denser the number of 'live' states",
-)
-
-
-# %%
-
-parser.add_argument(
-    "-ss",
-    "--spacescale",
-    action="store_const",
-    const = 2.9,
-    default=2.9,
-    help="determines the sparcity of the points distributed in the space; defaults to 2.9. smaller values lead to more densely clustered graphs",
-)
-
-# %%
-
 args = parser.parse_args()
-print(args)
-
-# %%
+print(args.accumulate(args.integers))
 
 n = 75
 m = 75
@@ -245,7 +215,6 @@ rule = update_state
 # %% codecell
 g = make_rpGA(N, num_states, density=density)
 g.vp.pos = gt.sfdp_layout(g, pos=g.vp.pos, eweight=g.ep.weight, K=0.5)
-pos = g.vp.pos
 gt.graph_draw(
     g,
     pos=g.vp.pos,
@@ -256,19 +225,18 @@ gt.graph_draw(
 )
 # %% codecell
 
-#offscreen = sys.argv[1] == "offscreen" if len(sys.argv) > 1 else False
-offscreen = False
-max_count = 250
+offscreen = sys.argv[1] == "offscreen" if len(sys.argv) > 1 else False
+max_count = 5000
 if offscreen and not os.path.exists("./frames"):
     os.mkdir("./frames")
 
 # This creates a GTK+ window with the initial graph layout
 if not offscreen:
-    win = gt.GraphWindow(g, pos, geometry=(500, 400))
+    win = GraphWindow(g, pos, geometry=(500, 400))
 else:
     win = Gtk.OffscreenWindow()
     win.set_default_size(500, 400)
-    win.graph = gt.GraphWidget(g, pos)
+    win.graph = GraphWidget(g, pos)
     win.add(win.graph)
 # %% codecell
 
