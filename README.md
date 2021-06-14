@@ -2,7 +2,7 @@
 What'd you expect? Of course this is about Conway's (Game of) Life!
 
 ## A topologically static version:
-
+![](https://github.com/izzortsi/graph-of-life/blob/37eb612be65f4b5d7b9f1bf94dbaed1d7db705cf/frames/graphol_static.gif)
 
 ## Topology-dynamics interaction:
 
