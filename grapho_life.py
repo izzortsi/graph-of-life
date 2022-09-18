@@ -165,14 +165,14 @@ def update_topology(
                                 g.ep.weight[e] -= 1
         # print(state_click_counter > num_neighbors//2)                                
         if state_click_counter >= 2*num_neighbors//3:
-            if npr.random() < 0.05:
+            if npr.random() < 0.025:
                 to_add.append([g.vp.pos[v], v])
     # print(len(to_add), g.num_vertices()) 
     nv_1 = g.num_vertices()
     # print(nv_1)       
     for (pos, father) in to_add:
         g.add_vertex()    
-        g.vp.pos[g.num_vertices() - 1] = pos + npr.random(2) 
+        g.vp.pos[g.num_vertices() - 1] = pos + npr.random(2) * 0.25
         g.vp.state[g.num_vertices() - 1] = 1
         g.vp.color[g.num_vertices() - 1] = "white"
         g.add_edge(g.num_vertices() - 1, father)
