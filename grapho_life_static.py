@@ -88,67 +88,104 @@ else:
 
 
 # %%
+def update_state(
+    g, v
+):  # updates the state of a vertex with rules analogous to the original GoL
+
+    Nv = g.get_all_neighbors(v)
+    sum_nbstates = sum([g.vp.state[u] for u in Nv])
+    nb_size = len(Nv)
+    acoef = sum_nbstates / nb_size
+    # print(acoef)
+    if g.vp.state[v] == 1:
+        if 2 / nb_size <= acoef <= 3 / nb_size:
+            g.vp.state[v] = 1
+            g.vp.color[v] = "white"
+        else:
+            g.vp.state[v] = 0
+            g.vp.color[v] = "black"
+
+    elif g.vp.state[v] == 0:
+        # if (acoef == 3/nb_size):
+        if 2 / nb_size <= acoef <= 4 / nb_size:
+            g.vp.state[v] = 1
+            g.vp.color[v] = "white"
+        else:
+            g.vp.state[v] = 0
+            g.vp.color[v] = "black"
+    return g.vp.state[v], g.vp.color[v]
+
+
+# %% codecell
+def update_configuration(g, rule):  # applies the update_state function to each vertex
+    to_remove = []
+    for v in g.vertices():
+        if len(g.get_all_edges(v)) == 0:
+            to_remove.append(v)
+        else:
+            g.vp.state[v], g.vp.color[v] = rule(g, v)
+
+    g.remove_vertex(to_remove)
+
+    return g
+
+
+# %% codecell
+def update_topology(
+    g,
+):  # updates the graph topology, based on the dynamics i.e., the vertices states
+    to_add = []
+    for v in g.vertices():
+        
+        neighbors = g.get_all_neighbors(v)
+        state_click_counter = 0
+        num_neighbors = len(neighbors)
+
+        for u in neighbors:
+            if g.vp.state[v] == g.vp.state[u]:
+                
+                e_ = g.edge(v, u, all_edges=True)
+
+                if g.vp.state[v] == 1:
+
+                    state_click_counter += 1
+
+                    for e in e_:
+                        g.ep.weight[e] = min([g.ep.weight[e] + 1, Q * g.gp.age])
+
+                elif g.vp.state[v] == 0:
+                    state_click_counter -= 1
+                    for e in e_:
+
+                        if g.ep.weight[e] < 1:
+                            g.remove_edge(e)
+
+                        else:
+                            if npr.rand() < 0.2:
+                                g.ep.weight[e] -= 1
+        if state_click_counter >= num_neighbors/2:
+            to_add.append(g.vp.pos[v])
+
+    # for pos in to_add:
+    #     g.add_vertex()
+    #     g.vp.pos[g.num_vertices() - 1] = pos
+    #     g.vp.state[g.num_vertices() - 1] = 1
+    #     g.vp.color[g.num_vertices() - 1] = "white"
+
+    g.gp.age += 1
+    return g
 
 
 # %%
 def run_simulation():
 
     global count, g
-    
-    to_remove = []
-    alterations = []
-    r = 0
-    
 
-    for v in g.get_vertices():
-        if len(g.get_all_edges(v)) == 0:
-            print(r)
-            r+=1
-            to_remove.append(v)
-        else:
-            Nv = g.get_all_neighbors(v)
-            sum_nbstates = sum([g.vp.state[u] for u in Nv])
-            nb_size = len(Nv)
-            acoef = sum_nbstates / nb_size
-    
-            if g.vp.state[v] == 1:
-                if 2 / nb_size <= acoef <= 3 / nb_size:
-                    state = 1
-                    color = "white"
-                else:
-                    state = 0
-                    color = "black"
-
-            elif g.vp.state[v] == 0:
-                # if (acoef == 3/nb_size):
-                if 2 / nb_size <= acoef <= 4 / nb_size:
-                    state = 1
-                    color = "white"
-                else:
-                    state = 0
-                    color = "black"
-            
-            alterations.append([v, state, color])
-            states.append(state)
-            colors.append(color)
-
-    ###some checks
-    #print(vertices)
-    diff = len(to_remove)
-    if diff >= 1:
-        print(f"diff {diff}, count {count}") #this eventually results in something ≠ 0, I still haven't find out why 
-    ###
-        
-    for (v, new_state, new_color) in alterations:
-        g.vp.state[v] = new_state
-        g.vp.color[v] = new_color
-
-
+    update_configuration(g, update_state)
+    update_topology(g)
     gt.sfdp_layout(
         g, pos=g.vp.pos, eweight=g.ep.weight, max_iter=1, init_step=0.01, K=0.5
          )
-
-    g.remove_vertex(to_remove) 
 
     count += 1
 

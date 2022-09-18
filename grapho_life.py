@@ -5,6 +5,12 @@ import numpy as np
 import numpy.random as npr
 import matplotlib.pyplot as plt
 import os, sys
+
+# %%
+import gi
+gi.require_version("Gtk", "3.0")
+# %%
+
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject, GLib
 import argparse
 
@@ -13,11 +19,15 @@ import argparse
 parser = argparse.ArgumentParser(
     description="Open an interactive GTK window running a Graph of Life."
 )
-parser.add_argument(
-    "is_offscreen",
-    action="store_true",
-    help="if True, will dump the frames to the disk instead of running an interactive GTK window",
-)
+
+# parser.add_argument(
+#     "--is_offscreen",
+#     action="store_const",
+#     metavar = "offscreen",
+#     const = True,
+#     default = True,
+#     help="if True, will dump the frames to the disk instead of running an interactive GTK window",
+# )
 
 # %%
 
@@ -158,6 +168,7 @@ def update_configuration(g, rule):  # applies the update_state function to each 
             G.vp.state[v], G.vp.color[v] = rule(G, v)
 
     G.remove_vertex(to_remove)
+
     return G
 
 
@@ -166,19 +177,27 @@ def update_topology(
     g,
 ):  # updates the graph topology, based on the dynamics i.e., the vertices states
     G = g.copy()
+    to_add = []
     for v in g.vertices():
+        
         neighbors = g.get_all_neighbors(v)
+        state_click_counter = 0
+        num_neighbors = len(neighbors)
+
         for u in neighbors:
             if g.vp.state[v] == g.vp.state[u]:
-
+                
                 e_ = G.edge(v, u, all_edges=True)
 
                 if g.vp.state[v] == 1:
+
+                    state_click_counter += 1
 
                     for e in e_:
                         G.ep.weight[e] = min([G.ep.weight[e] + 1, Q * G.gp.age])
 
                 elif g.vp.state[v] == 0:
+                    state_click_counter -= 1
                     for e in e_:
 
                         if G.ep.weight[e] < 1:
@@ -187,6 +206,14 @@ def update_topology(
                         else:
                             if npr.rand() < 0.2:
                                 G.ep.weight[e] -= 1
+        if state_click_counter >= num_neighbors/2:
+            to_add.append(G.vp.pos[v])
+
+    # for pos in to_add:
+    #     G.add_vertex()
+    #     G.vp.pos[G.num_vertices() - 1] = pos
+    #     G.vp.state[G.num_vertices() - 1] = 1
+    #     G.vp.color[G.num_vertices() - 1] = "white"
 
     G.gp.age += 1
     return G
