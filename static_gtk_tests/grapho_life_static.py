@@ -140,3 +140,5 @@ win.connect("delete_event", Gtk.main_quit)
 win.show_all()
 Gtk.main()
 
+
+# %%
