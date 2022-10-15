@@ -1,6 +1,5 @@
 # %%
 
-from defusedxml import DTDForbidden
 import graph_tool.all as gt
 import numpy as np
 import numpy.random as npr
@@ -172,10 +171,15 @@ def update_topology(
     # print(nv_1)       
     for (pos, father) in to_add:
         g.add_vertex()    
-        g.vp.pos[g.num_vertices() - 1] = pos + npr.random(2) * 0.25
+        g.vp.pos[g.num_vertices() - 1] = pos + 1.2*npr.random(2) 
         g.vp.state[g.num_vertices() - 1] = 1
-        g.vp.color[g.num_vertices() - 1] = "white"
+        g.vp.color[g.num_vertices() - 1] = npr.choice(["white", "black"])
         g.add_edge(g.num_vertices() - 1, father)
+        try:
+            g.add_edge(g.num_vertices() - 1, npr.choice(g.get_all_neighbors(father)))
+        except Exception as e:
+            print(Exception)
+
 
     print(nv_1, g.num_vertices())
     g.gp.age += 1
